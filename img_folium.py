@@ -4,6 +4,7 @@ import pandas as pd
 import geo_transformer
 import os
 import math
+import json
 import warnings
 
 # https://cdn.bootcss.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css
@@ -43,6 +44,7 @@ LEAFLET_DRAW_CSS = "https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/le
 LEAFLET_DRAW_JS = "https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"
 ANNOTATION_CSS_FILE = "map_annotations.css"
 ANNOTATION_JS_FILE = "map_annotations.js"
+ANNOTATIONS_FILE = "annotations.json"
 
 
 def transform_coordinates(geometry):
@@ -283,10 +285,20 @@ def inject_annotation_tools(html_path, map_name):
     with open(ANNOTATION_JS_FILE, "r", encoding="utf-8") as f:
         annotation_js = f.read()
 
+    annotations_js = ""
+    if os.path.exists(ANNOTATIONS_FILE):
+        with open(ANNOTATIONS_FILE, "r", encoding="utf-8") as f:
+            annotations_data = json.load(f)
+        payload = json.dumps(annotations_data, ensure_ascii=False, separators=(",", ":"))
+        payload = payload.replace("</", "<\\/").replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
+        annotations_js = "window.__HQ_ANNOTATIONS__ = " + payload + ";\n"
+        shape_count = len(annotations_data.get("working", {}).get("shapes", []))
+        print(f"[标注] 已内置 {ANNOTATIONS_FILE} 中的 {shape_count} 个标注区域")
+
     if "window.__hqMap" not in content:
         injection = (
             "\n<style>\n" + annotation_css + "\n</style>\n"
-            "<script>\nwindow.__hqMap = " + map_name + ";\n" + annotation_js + "\n</script>\n"
+            "<script>\nwindow.__hqMap = " + map_name + ";\n" + annotations_js + annotation_js + "\n</script>\n"
         )
         content = content.replace("</html>", injection + "</html>", 1)
 

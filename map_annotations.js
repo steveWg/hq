@@ -126,22 +126,28 @@
         }
     }
 
-    /* ---------------- 读取已保存的数据 ---------------- */
-    var store = readStore();
-    if (store) {
-        if (Array.isArray(store.versions)) {
-            for (var vi = 0; vi < store.versions.length; vi++) {
-                var sv = sanitizeVersion(store.versions[vi]);
+    /* ---------------- 读取 / 应用标注数据 ---------------- */
+    function applyStore(data) {
+        versions = [];
+        shapes = [];
+        activeVersionId = null;
+        nextVersionNo = 1;
+        settings = { color: DEFAULT_COLOR, opacity: DEFAULT_OPACITY };
+        if (!data || typeof data !== "object") return;
+
+        if (Array.isArray(data.versions)) {
+            for (var vi = 0; vi < data.versions.length; vi++) {
+                var sv = sanitizeVersion(data.versions[vi]);
                 if (sv) versions.push(sv);
             }
         }
-        if (store.activeVersionId) {
-            activeVersionId = findVersion(String(store.activeVersionId)) ? String(store.activeVersionId) : null;
+        if (data.activeVersionId) {
+            activeVersionId = findVersion(String(data.activeVersionId)) ? String(data.activeVersionId) : null;
         }
-        if (store.working && Array.isArray(store.working.shapes)) {
+        if (data.working && Array.isArray(data.working.shapes)) {
             /* 优先恢复未保存的编辑 */
-            for (var wi = 0; wi < store.working.shapes.length; wi++) {
-                var ws = sanitizeShape(store.working.shapes[wi]);
+            for (var wi = 0; wi < data.working.shapes.length; wi++) {
+                var ws = sanitizeShape(data.working.shapes[wi]);
                 if (ws) shapes.push(ws);
             }
         } else if (activeVersionId) {
@@ -153,17 +159,24 @@
             if (versions[mi].no > maxNo) maxNo = versions[mi].no;
         }
         nextVersionNo = maxNo + 1;
-        if (parseInt(store.nextVersionNo, 10) > nextVersionNo) {
-            nextVersionNo = parseInt(store.nextVersionNo, 10);
+        if (parseInt(data.nextVersionNo, 10) > nextVersionNo) {
+            nextVersionNo = parseInt(data.nextVersionNo, 10);
         }
-        if (store.settings) {
-            if (/^#[0-9a-fA-F]{6}$/.test(store.settings.color || "")) {
-                settings.color = store.settings.color;
+        if (data.settings) {
+            if (/^#[0-9a-fA-F]{6}$/.test(data.settings.color || "")) {
+                settings.color = data.settings.color;
             }
-            var savedOpacity = parseInt(store.settings.opacity, 10);
+            var savedOpacity = parseInt(data.settings.opacity, 10);
             if (isFinite(savedOpacity)) settings.opacity = clamp(savedOpacity, 0, 100);
         }
     }
+
+    var store = readStore();
+    if (!store && window.__HQ_ANNOTATIONS__ && typeof window.__HQ_ANNOTATIONS__ === "object") {
+        /* 换电脑/换浏览器时，加载随 HTML 内置的标注快照 */
+        store = window.__HQ_ANNOTATIONS__;
+    }
+    applyStore(store);
 
     /* ---------------- 构建面板 ---------------- */
     var panel = document.createElement("div");
@@ -202,9 +215,14 @@
         '    <button type="button" id="anno-save" class="anno-btn anno-btn-primary">保存为新版本</button>',
         '    <button type="button" id="anno-delete" class="anno-btn anno-btn-danger" title="删除当前选中的版本">删除版本</button>',
         '  </div>',
+        '  <div class="anno-row" style="margin-top:6px;">',
+        '    <button type="button" id="anno-export" class="anno-btn" title="导出为 JSON 备份">导出标注</button>',
+        '    <button type="button" id="anno-import" class="anno-btn" title="从 JSON 文件导入">导入标注</button>',
+        '    <input type="file" id="anno-import-file" accept=".json,application/json" style="display:none;">',
+        '  </div>',
         '  <div class="anno-status" id="anno-status"></div>',
         '  <div id="anno-flash"></div>',
-        '  <div class="anno-footer">标注自动保存在本机浏览器，重新生成地图后会恢复</div>',
+        '  <div class="anno-footer">标注自动保存在本机浏览器；重新生成地图后会恢复，可用导出文件备份</div>',
         '</div>'
     ].join("");
     document.body.appendChild(panel);
@@ -222,6 +240,9 @@
     var countEl = document.getElementById("anno-count");
     var flashEl = document.getElementById("anno-flash");
     var foldBtn = document.getElementById("anno-fold");
+    var exportBtn = document.getElementById("anno-export");
+    var importBtn = document.getElementById("anno-import");
+    var importFile = document.getElementById("anno-import-file");
 
     colorInput.value = settings.color;
     opacityInput.value = String(settings.opacity);
@@ -635,6 +656,78 @@
         renderAll();
         refreshVersionSelect();
         flash("已载入版本 v" + version.no);
+    });
+
+    /* ---------------- 导出 / 导入标注 ---------------- */
+    function reloadSettingsUi() {
+        colorInput.value = settings.color;
+        opacityInput.value = String(settings.opacity);
+        updateOpacityLabel();
+    }
+
+    function timestampText() {
+        var d = new Date();
+        function pad(n) { return n < 10 ? "0" + n : String(n); }
+        return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) +
+            "_" + pad(d.getHours()) + pad(d.getMinutes());
+    }
+
+    exportBtn.addEventListener("click", function () {
+        var data = {
+            app: "hongqiao-annotations",
+            exportTime: formatTime(new Date()),
+            versions: versions,
+            activeVersionId: activeVersionId,
+            nextVersionNo: nextVersionNo,
+            working: { shapes: shapes },
+            settings: { color: colorInput.value, opacity: parseInt(opacityInput.value, 10) }
+        };
+        var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement("a");
+        link.href = url;
+        link.download = "hq_annotations_" + timestampText() + ".json";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        flash("已导出标注文件");
+    });
+
+    importBtn.addEventListener("click", function () {
+        importFile.click();
+    });
+
+    importFile.addEventListener("change", function () {
+        var file = importFile.files && importFile.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function () {
+            try {
+                var data = JSON.parse(String(reader.result));
+                if (!data || typeof data !== "object") throw new Error("文件格式不正确");
+                var hasVersions = Array.isArray(data.versions);
+                var hasWorking = data.working && Array.isArray(data.working.shapes);
+                if (!hasVersions && !hasWorking) throw new Error("文件中没有可导入的标注");
+                if (shapes.length && !window.confirm("导入会替换当前标注，是否继续？")) return;
+                applyStore(data);
+                reloadSettingsUi();
+                persist();
+                renderAll();
+                refreshVersionSelect();
+                updateStatus();
+                flash("已导入标注");
+            } catch (err) {
+                window.alert("导入失败：" + err.message);
+            } finally {
+                importFile.value = "";
+            }
+        };
+        reader.onerror = function () {
+            window.alert("读取文件失败");
+            importFile.value = "";
+        };
+        reader.readAsText(file, "utf-8");
     });
 
     /* ---------------- 编辑 / 删除工具 ---------------- */
