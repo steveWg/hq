@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+
+# 临时文件
+~$*
+*.tmp
+*.log
+
+# 未纳入仓库的本地资料 / 独立演示文件
+雷达/
+*.docx
+_band_check.png
+amap.html
+t.js

@@ -1,0 +1,290 @@
+/* ============ 区域标注面板 ============ */
+#anno-panel {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 9999;
+    width: 252px;
+    background: rgba(255, 255, 255, 0.96);
+    border-radius: 10px;
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.3);
+    font-family: Microsoft YaHei, Arial, sans-serif;
+    font-size: 13px;
+    color: #333;
+    user-select: none;
+}
+
+#anno-panel * {
+    box-sizing: border-box;
+}
+
+#anno-panel .anno-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border-bottom: 1px solid #eee;
+}
+
+#anno-panel .anno-title {
+    font-weight: 700;
+    font-size: 14px;
+}
+
+#anno-panel .anno-count {
+    background: #e53935;
+    color: #fff;
+    border-radius: 9px;
+    font-size: 11px;
+    padding: 0 7px;
+    line-height: 18px;
+}
+
+#anno-panel .anno-fold {
+    margin-left: auto;
+    border: none;
+    background: transparent;
+    font-size: 17px;
+    line-height: 1;
+    cursor: pointer;
+    color: #888;
+    padding: 0 2px;
+}
+
+#anno-panel .anno-fold:hover {
+    color: #333;
+}
+
+#anno-panel .anno-body {
+    padding: 9px 10px 10px;
+}
+
+#anno-panel.anno-collapsed .anno-body {
+    display: none;
+}
+
+#anno-panel .anno-field {
+    margin-bottom: 7px;
+}
+
+#anno-panel .anno-field label {
+    display: block;
+    color: #666;
+    font-size: 12px;
+    margin-bottom: 3px;
+}
+
+#anno-panel #anno-name,
+#anno-panel #anno-version {
+    width: 100%;
+    padding: 5px 7px;
+    border: 1px solid #d5d5d5;
+    border-radius: 5px;
+    font-size: 13px;
+    color: #333;
+    background: #fff;
+    outline: none;
+    font-family: inherit;
+}
+
+#anno-panel #anno-name:focus,
+#anno-panel #anno-version:focus {
+    border-color: #e53935;
+}
+
+#anno-panel .anno-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+#anno-panel .anno-row-settings {
+    justify-content: space-between;
+    margin-top: 2px;
+}
+
+#anno-panel .anno-color-label,
+#anno-panel .anno-opacity-label {
+    font-size: 12px;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+#anno-panel #anno-color {
+    width: 40px;
+    height: 26px;
+    border: 1px solid #d5d5d5;
+    border-radius: 4px;
+    padding: 0 2px;
+    background: #fff;
+    cursor: pointer;
+}
+
+#anno-panel #anno-opacity {
+    width: 100%;
+    margin: 4px 0 8px;
+    accent-color: #e53935;
+}
+
+#anno-panel .anno-btn {
+    flex: 1;
+    padding: 6px 8px;
+    border: 1px solid #d5d5d5;
+    border-radius: 5px;
+    background: #fff;
+    color: #444;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+#anno-panel .anno-btn:hover {
+    background: #f5f5f5;
+}
+
+#anno-panel .anno-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#anno-panel .anno-btn-primary {
+    background: #e53935;
+    border-color: #e53935;
+    color: #fff;
+}
+
+#anno-panel .anno-btn-primary:hover {
+    background: #d32f2f;
+}
+
+#anno-panel .anno-btn-danger {
+    color: #c62828;
+    border-color: #f0c4c4;
+    background: #fff6f6;
+}
+
+#anno-panel .anno-btn-danger:hover {
+    background: #ffebee;
+}
+
+#anno-panel .anno-btn-active {
+    background: #c62828 !important;
+    border-color: #c62828 !important;
+    color: #fff !important;
+}
+
+#anno-panel .anno-hint {
+    color: #888;
+    font-size: 11px;
+    line-height: 1.5;
+    margin-top: 6px;
+}
+
+#anno-panel .anno-sep {
+    height: 1px;
+    background: #eee;
+    margin: 9px 0;
+}
+
+#anno-panel .anno-status {
+    font-size: 11px;
+    color: #777;
+    margin-top: 7px;
+    line-height: 1.5;
+}
+
+#anno-panel .anno-footer {
+    font-size: 10px;
+    color: #aaa;
+    margin-top: 3px;
+    line-height: 1.4;
+}
+
+#anno-flash {
+    font-size: 11px;
+    color: #2e7d32;
+    line-height: 1.5;
+    margin-top: 2px;
+    min-height: 16px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+#anno-flash.show {
+    opacity: 1;
+}
+
+/* ============ 图形名称标签 ============ */
+.anno-label {
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+    color: #222;
+    font-family: Microsoft YaHei, Arial, sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 1px 6px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    white-space: nowrap;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.anno-label::before {
+    display: none;
+}
+
+/* ============ 图形弹窗 ============ */
+.anno-popup {
+    font-family: Microsoft YaHei, Arial, sans-serif;
+    font-size: 13px;
+    min-width: 170px;
+    color: #333;
+}
+
+.anno-popup-title {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.anno-popup-meta {
+    color: #888;
+    font-size: 11px;
+    margin-bottom: 8px;
+}
+
+.anno-popup-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.anno-popup .anno-btn {
+    flex: 1;
+    padding: 4px 8px;
+    border: 1px solid #d5d5d5;
+    border-radius: 5px;
+    background: #fff;
+    color: #444;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.anno-popup .anno-btn:hover {
+    background: #f5f5f5;
+}
+
+.anno-popup .anno-btn-danger {
+    color: #c62828;
+    border-color: #f0c4c4;
+    background: #fff6f6;
+}
+
+.anno-popup .anno-btn-danger:hover {
+    background: #ffebee;
+}
